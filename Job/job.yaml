@@ -1,0 +1,131 @@
+resources:
+  jobs:
+    TPC_H_Sales_Supply_Chain_Job:
+      name: "TPC-H Sales & Supply Chain Job "
+      email_notifications:
+        on_failure:
+          - mohitchoudhary@cyntexa.com
+      tasks:
+        - task_key: setup
+          notebook_task:
+            notebook_path: /Workspace/TPC-H Sales & Supply Chain
+              Lakehouse/Cyntexa-IAP-/bronze/00_setup
+            source: WORKSPACE
+          max_retries: 2
+          min_retry_interval_millis: 10000
+          disable_auto_optimization: true
+        - task_key: bronze_ingestion
+          depends_on:
+            - task_key: setup
+          notebook_task:
+            notebook_path: /Workspace/TPC-H Sales & Supply Chain
+              Lakehouse/Cyntexa-IAP-/bronze/01_ingestion
+            source: WORKSPACE
+          max_retries: 2
+          min_retry_interval_millis: 20000
+          disable_auto_optimization: true
+        - task_key: region_silver_cleaning
+          depends_on:
+            - task_key: bronze_ingestion
+          notebook_task:
+            notebook_path: /Workspace/TPC-H Sales & Supply Chain
+              Lakehouse/Cyntexa-IAP-/silver/02_region_cleaning
+            source: WORKSPACE
+          max_retries: 1
+          min_retry_interval_millis: 10000
+          disable_auto_optimization: true
+        - task_key: nation_silver_cleaning
+          depends_on:
+            - task_key: region_silver_cleaning
+          notebook_task:
+            notebook_path: /Workspace/TPC-H Sales & Supply Chain
+              Lakehouse/Cyntexa-IAP-/silver/02_nation_cleaning
+            source: WORKSPACE
+          max_retries: 1
+          min_retry_interval_millis: 20000
+          disable_auto_optimization: false
+        - task_key: supplier_silver_cleaning
+          depends_on:
+            - task_key: nation_silver_cleaning
+          notebook_task:
+            notebook_path: /Workspace/TPC-H Sales & Supply Chain
+              Lakehouse/Cyntexa-IAP-/silver/02_supplier_cleaning
+            source: WORKSPACE
+          max_retries: 1
+          min_retry_interval_millis: 10000
+          disable_auto_optimization: true
+        - task_key: part_silver_cleaning
+          depends_on:
+            - task_key: supplier_silver_cleaning
+          notebook_task:
+            notebook_path: /Workspace/TPC-H Sales & Supply Chain
+              Lakehouse/Cyntexa-IAP-/silver/02_part_cleaning
+            source: WORKSPACE
+          max_retries: 1
+          min_retry_interval_millis: 10000
+          disable_auto_optimization: true
+        - task_key: parsupp_silver_cleaning
+          depends_on:
+            - task_key: part_silver_cleaning
+          notebook_task:
+            notebook_path: /Workspace/TPC-H Sales & Supply Chain
+              Lakehouse/Cyntexa-IAP-/silver/02_partsupp_cleaning
+            source: WORKSPACE
+          max_retries: 1
+          min_retry_interval_millis: 10000
+          disable_auto_optimization: false
+        - task_key: customer_silver_cleaning
+          depends_on:
+            - task_key: parsupp_silver_cleaning
+          notebook_task:
+            notebook_path: /Workspace/TPC-H Sales & Supply Chain
+              Lakehouse/Cyntexa-IAP-/silver/02_customer_cleaning
+            source: WORKSPACE
+          max_retries: 1
+          min_retry_interval_millis: 10000
+          disable_auto_optimization: true
+        - task_key: orders_silver_cleaning
+          depends_on:
+            - task_key: customer_silver_cleaning
+          notebook_task:
+            notebook_path: /Workspace/TPC-H Sales & Supply Chain
+              Lakehouse/Cyntexa-IAP-/silver/02_orders_cleaning
+            source: WORKSPACE
+          max_retries: 1
+          min_retry_interval_millis: 10000
+          disable_auto_optimization: true
+        - task_key: lineitem_silver_cleaning
+          depends_on:
+            - task_key: orders_silver_cleaning
+          notebook_task:
+            notebook_path: /Workspace/TPC-H Sales & Supply Chain
+              Lakehouse/Cyntexa-IAP-/silver/02_lineitem_cleaning
+            source: WORKSPACE
+          max_retries: 1
+          min_retry_interval_millis: 10000
+          disable_auto_optimization: true
+        - task_key: fact_and_dim_gold
+          depends_on:
+            - task_key: lineitem_silver_cleaning
+          notebook_task:
+            notebook_path: /Workspace/TPC-H Sales & Supply Chain
+              Lakehouse/Cyntexa-IAP-/gold/03_fact_and_dim
+            source: WORKSPACE
+          max_retries: 1
+          min_retry_interval_millis: 10000
+          disable_auto_optimization: true
+        - task_key: data_quality_check
+          depends_on:
+            - task_key: fact_and_dim_gold
+          notebook_task:
+            notebook_path: /Workspace/TPC-H Sales & Supply Chain Lakehouse/Cyntexa-IAP-/Data
+              Quality and Reconciliation/04_data_quality
+            source: WORKSPACE
+          min_retry_interval_millis: 900000
+          disable_auto_optimization: true
+      queue:
+        enabled: true
+      parameters:
+        - name: CATALOG
+          default: dev
+      performance_target: PERFORMANCE_OPTIMIZED
